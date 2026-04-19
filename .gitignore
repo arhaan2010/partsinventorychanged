@@ -1,5 +1,4 @@
-node_modules
-.next
-dist
-build
-.env
+*.ts
+*.js
+/.next
+/node_modules
