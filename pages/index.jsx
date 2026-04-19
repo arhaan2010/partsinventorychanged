@@ -800,6 +800,7 @@ const s = {
     border: "1px solid #222",
     padding: "9px 14px",
     fontFamily: "inherit",
+    
     fontSize: 12,
     flex: 1,
     minWidth: 200,
