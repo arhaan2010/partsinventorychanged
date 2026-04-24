@@ -9,6 +9,8 @@ import { useState, useEffect, useRef } from "react";
 
 const auth = getAuth();
 
+const ADMIN_EMAIL = "v09760arhaan@dpsrkp.net";
+
 const CATEGORIES = ["Sensor", "Actuator", "Controller", "Power", "Structure", "Electronics", "Mechanical", "Other"];
 
 // ─────────────────────────────────────────
@@ -46,23 +48,19 @@ function validate(fields) {
 // AUTH SCREEN  (Login + Sign Up + Reset)
 // ─────────────────────────────────────────
 function AuthScreen({ onAuthSuccess }) {
-  // "login" | "signup" | "reset"
   const [mode, setMode] = useState("login");
 
-  // Login
   const [loginFields, setLoginFields] = useState({ email: "", password: "" });
   const [rememberMe, setRememberMe]   = useState(true);
   const [loginErrors, setLoginErrors] = useState({});
   const [loginGlobal, setLoginGlobal] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
 
-  // Sign Up
   const [signupFields, setSignupFields] = useState({ name: "", role: "", email: "", password: "", confirm: "" });
   const [signupErrors, setSignupErrors] = useState({});
   const [signupGlobal, setSignupGlobal] = useState("");
   const [signupLoading, setSignupLoading] = useState(false);
 
-  // Reset
   const [resetEmail, setResetEmail]   = useState("");
   const [resetSent, setResetSent]     = useState(false);
   const [resetError, setResetError]   = useState("");
@@ -71,7 +69,6 @@ function AuthScreen({ onAuthSuccess }) {
   const setLogin  = patch => setLoginFields(p => ({ ...p, ...patch }));
   const setSignup = patch => setSignupFields(p => ({ ...p, ...patch }));
 
-  // ── Login ──
   const handleLogin = async (e) => {
     e?.preventDefault();
     const errs = validate({ email: loginFields.email, password: loginFields.password });
@@ -89,7 +86,6 @@ function AuthScreen({ onAuthSuccess }) {
     }
   };
 
-  // ── Sign Up ──
   const handleSignup = async (e) => {
     e?.preventDefault();
     const errs = validate({
@@ -102,25 +98,21 @@ function AuthScreen({ onAuthSuccess }) {
     if (Object.keys(errs).length) return;
     setSignupGlobal(""); setSignupLoading(true);
     try {
-      // Create Firebase Auth account
       const cred = await createUserWithEmailAndPassword(
         auth, signupFields.email.trim().toLowerCase(), signupFields.password
       );
-      // Write member record — do this before the auth state listener fires
       await push(ref(db, "members"), {
         name:  signupFields.name.trim(),
         role:  signupFields.role.trim() || "Member",
         email: signupFields.email.trim().toLowerCase(),
         uid:   cred.user.uid,
       });
-      // Auth listener in parent will pick up the new user automatically
     } catch (err) {
       setSignupGlobal(friendlyError(err.code));
       setSignupLoading(false);
     }
   };
 
-  // ── Reset ──
   const handleReset = async (e) => {
     e?.preventDefault();
     if (!resetEmail.trim()) { setResetError("Enter your email."); return; }
@@ -145,11 +137,9 @@ function AuthScreen({ onAuthSuccess }) {
   return (
     <div style={ls.root}>
       <div style={ls.card}>
-        {/* Header */}
         <div style={ls.logo}>PARTS MANAGER</div>
         <div style={ls.subtitle}>TEAM INVENTORY SYSTEM</div>
 
-        {/* Mode tabs */}
         <div style={ls.modeTabs}>
           {["login", "signup"].map(m => (
             <button
@@ -163,7 +153,6 @@ function AuthScreen({ onAuthSuccess }) {
           ))}
         </div>
 
-        {/* ── LOGIN ── */}
         {mode === "login" && (
           <form onSubmit={handleLogin} style={ls.form} noValidate>
             <Field label="EMAIL" error={loginErrors.email}>
@@ -171,10 +160,7 @@ function AuthScreen({ onAuthSuccess }) {
                 type="email" autoComplete="email"
                 value={loginFields.email}
                 onChange={e => setLogin({ email: e.target.value })}
-                onBlur={() => {
-                  const e = validate({ email: loginFields.email });
-                  setLoginErrors(p => ({ ...p, email: e.email }));
-                }}
+                onBlur={() => { const e = validate({ email: loginFields.email }); setLoginErrors(p => ({ ...p, email: e.email })); }}
                 style={{ ...ls.input, ...(loginErrors.email ? ls.inputError : {}) }}
                 placeholder="you@example.com"
               />
@@ -184,17 +170,13 @@ function AuthScreen({ onAuthSuccess }) {
               <PasswordInput
                 value={loginFields.password}
                 onChange={v => setLogin({ password: v })}
-                onBlur={() => {
-                  const e = validate({ password: loginFields.password });
-                  setLoginErrors(p => ({ ...p, password: e.password }));
-                }}
+                onBlur={() => { const e = validate({ password: loginFields.password }); setLoginErrors(p => ({ ...p, password: e.password })); }}
                 hasError={!!loginErrors.password}
                 autoComplete="current-password"
                 placeholder="••••••••"
               />
             </Field>
 
-            {/* Remember me */}
             <label style={ls.rememberRow}>
               <span
                 style={{ ...ls.checkbox, ...(rememberMe ? ls.checkboxChecked : {}) }}
@@ -216,17 +198,12 @@ function AuthScreen({ onAuthSuccess }) {
               {loginLoading ? "SIGNING IN..." : "SIGN IN"}
             </button>
 
-            <button
-              type="button"
-              style={ls.linkBtn}
-              onClick={() => { setResetEmail(loginFields.email); switchMode("reset"); }}
-            >
+            <button type="button" style={ls.linkBtn} onClick={() => { setResetEmail(loginFields.email); switchMode("reset"); }}>
               Forgot password?
             </button>
           </form>
         )}
 
-        {/* ── SIGN UP ── */}
         {mode === "signup" && (
           <form onSubmit={handleSignup} style={ls.form} noValidate>
             <Field label="FULL NAME" error={signupErrors.name}>
@@ -234,10 +211,7 @@ function AuthScreen({ onAuthSuccess }) {
                 type="text" autoComplete="name"
                 value={signupFields.name}
                 onChange={e => setSignup({ name: e.target.value })}
-                onBlur={() => {
-                  const e = validate({ name: signupFields.name });
-                  setSignupErrors(p => ({ ...p, name: e.name }));
-                }}
+                onBlur={() => { const e = validate({ name: signupFields.name }); setSignupErrors(p => ({ ...p, name: e.name })); }}
                 style={{ ...ls.input, ...(signupErrors.name ? ls.inputError : {}) }}
                 placeholder="Jane Smith"
               />
@@ -258,10 +232,7 @@ function AuthScreen({ onAuthSuccess }) {
                 type="email" autoComplete="email"
                 value={signupFields.email}
                 onChange={e => setSignup({ email: e.target.value })}
-                onBlur={() => {
-                  const e = validate({ email: signupFields.email });
-                  setSignupErrors(p => ({ ...p, email: e.email }));
-                }}
+                onBlur={() => { const e = validate({ email: signupFields.email }); setSignupErrors(p => ({ ...p, email: e.email })); }}
                 style={{ ...ls.input, ...(signupErrors.email ? ls.inputError : {}) }}
                 placeholder="you@example.com"
               />
@@ -271,10 +242,7 @@ function AuthScreen({ onAuthSuccess }) {
               <PasswordInput
                 value={signupFields.password}
                 onChange={v => setSignup({ password: v })}
-                onBlur={() => {
-                  const e = validate({ password: signupFields.password });
-                  setSignupErrors(p => ({ ...p, password: e.password }));
-                }}
+                onBlur={() => { const e = validate({ password: signupFields.password }); setSignupErrors(p => ({ ...p, password: e.password })); }}
                 hasError={!!signupErrors.password}
                 autoComplete="new-password"
                 placeholder="Min. 6 characters"
@@ -286,10 +254,7 @@ function AuthScreen({ onAuthSuccess }) {
               <PasswordInput
                 value={signupFields.confirm}
                 onChange={v => setSignup({ confirm: v })}
-                onBlur={() => {
-                  const e = validate({ confirm: signupFields.confirm, password: signupFields.password });
-                  setSignupErrors(p => ({ ...p, confirm: e.confirm }));
-                }}
+                onBlur={() => { const e = validate({ confirm: signupFields.confirm, password: signupFields.password }); setSignupErrors(p => ({ ...p, confirm: e.confirm })); }}
                 hasError={!!signupErrors.confirm}
                 autoComplete="new-password"
                 placeholder="••••••••"
@@ -305,7 +270,6 @@ function AuthScreen({ onAuthSuccess }) {
           </form>
         )}
 
-        {/* ── RESET ── */}
         {mode === "reset" && (
           <form onSubmit={handleReset} style={ls.form} noValidate>
             <div style={ls.resetTitle}>RESET PASSWORD</div>
@@ -341,7 +305,6 @@ function AuthScreen({ onAuthSuccess }) {
   );
 }
 
-// ── Sub-components ──
 function Field({ label, error, children }) {
   return (
     <div style={ls.fieldWrap}>
@@ -401,9 +364,9 @@ function PasswordStrength({ password }) {
 }
 
 // ─────────────────────────────────────────
-// CREATE USER MODAL  (in-app, any member)
+// CREATE USER MODAL  (admin only)
 // ─────────────────────────────────────────
-function CreateUserModal({ onClose, onCreated, showNotification }) {
+function CreateUserModal({ onClose, showNotification }) {
   const [fields, setFields]   = useState({ name: "", role: "", email: "", password: "", confirm: "" });
   const [errors, setErrors]   = useState({});
   const [global, setGlobal]   = useState("");
@@ -418,14 +381,11 @@ function CreateUserModal({ onClose, onCreated, showNotification }) {
     if (Object.keys(errs).length) return;
     setGlobal(""); setLoading(true);
 
-    // Save current auth state so we can restore it
     const previousUser = auth.currentUser;
 
     try {
       const cred = await createUserWithEmailAndPassword(
-        auth,
-        fields.email.trim().toLowerCase(),
-        fields.password
+        auth, fields.email.trim().toLowerCase(), fields.password
       );
 
       await push(ref(db, "members"), {
@@ -435,14 +395,7 @@ function CreateUserModal({ onClose, onCreated, showNotification }) {
         uid:   cred.user.uid,
       });
 
-      // Sign back in as the previous user if we got signed out
-      // (Firebase automatically signs in the newly created user)
-      // We sign out the new account and the auth listener will restore session
       if (previousUser && auth.currentUser?.uid !== previousUser.uid) {
-        // The original user's session is restored via their remembered persistence
-        // Best UX: just notify and close; the admin stays logged in on next reload
-        // For full session restore we'd need their credentials, so instead
-        // we reload — this restores from local persistence if "remember me" was set.
         showNotification(`User "${fields.name.trim()}" created — refreshing session...`);
         setTimeout(() => window.location.reload(), 1500);
         return;
@@ -530,12 +483,10 @@ export default function PartsManager() {
   const [requestsTab, setRequestsTab]   = useState("incoming");
   const [resetPanels, setResetPanels]   = useState({});
 
-  // ── Auth listener ──
   useEffect(() => {
     return onAuthStateChanged(auth, user => { setAuthUser(user); setAuthReady(true); });
   }, []);
 
-  // ── Firebase data ──
   useEffect(() => {
     if (!authUser) return;
     const unsubs = [
@@ -549,6 +500,9 @@ export default function PartsManager() {
   const currentUser = members.find(m =>
     m.email?.toLowerCase() === authUser?.email?.toLowerCase()
   ) || null;
+
+  // ── Admin check ──
+  const isAdmin = authUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   const showNotification = (msg, type = "success") => {
     setNotification({ msg, type });
@@ -636,7 +590,7 @@ export default function PartsManager() {
     showNotification("Request cancelled", "error");
   };
 
-  // ── Reset-password helpers ──
+  // ── Reset-password helpers (admin only) ──
   const setResetPanel = (memberId, patch) =>
     setResetPanels(prev => ({ ...prev, [memberId]: { ...(prev[memberId] || {}), ...patch } }));
 
@@ -681,14 +635,8 @@ export default function PartsManager() {
   return (
     <div style={s.root}>
       <style>{`
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 0.2; }
-          50% { opacity: 1; }
-        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
       `}</style>
 
       {/* HEADER */}
@@ -755,6 +703,7 @@ export default function PartsManager() {
                         </button>
                       )}
                       {isOwner && <span style={s.ownerTag}>YOU OWN THIS</span>}
+                      {/* Everyone can edit and delete parts */}
                       <button style={s.ghostBtn} onClick={() => setEditPart({ ...p })}>EDIT</button>
                       <button style={s.dangerBtn} onClick={() => setConfirmDelete({ type: "part", id: p.id, name: p.name })}>DELETE</button>
                     </div>
@@ -838,9 +787,12 @@ export default function PartsManager() {
           <div>
             <div style={s.toolbar}>
               <div style={s.sectionTitle}>MEMBERS</div>
-              <button style={s.primaryBtn} onClick={() => setCreateUserModal(true)}>
-                + CREATE NEW USER
-              </button>
+              {/* Only admin sees Create New User */}
+              {isAdmin && (
+                <button style={s.primaryBtn} onClick={() => setCreateUserModal(true)}>
+                  + CREATE NEW USER
+                </button>
+              )}
             </div>
             {members.length === 0 && <div style={s.empty}>No members found</div>}
             <div style={s.memberList}>
@@ -863,19 +815,22 @@ export default function PartsManager() {
                           {m.email && <div style={s.memberEmail}>{m.email}</div>}
                         </div>
                       </div>
-                      <div style={s.memberActions}>
-                        <button
-                          style={{ ...s.ghostBtn, ...(panel.open ? { borderColor: "#fff", color: "#fff" } : {}) }}
-                          onClick={() => setResetPanel(m.id, { open: !panel.open, sent: false, error: "", directSuccess: false })}
-                        >
-                          RESET PASSWORD
-                        </button>
-                        <button style={s.ghostBtn}  onClick={() => setEditMember({ ...m })}>EDIT</button>
-                        <button style={s.dangerBtn} onClick={() => setConfirmDelete({ type: "member", id: m.id, name: m.name })}>DELETE</button>
-                      </div>
+                      {/* Only admin sees password reset, edit, delete for members */}
+                      {isAdmin && (
+                        <div style={s.memberActions}>
+                          <button
+                            style={{ ...s.ghostBtn, ...(panel.open ? { borderColor: "#fff", color: "#fff" } : {}) }}
+                            onClick={() => setResetPanel(m.id, { open: !panel.open, sent: false, error: "", directSuccess: false })}
+                          >
+                            RESET PASSWORD
+                          </button>
+                          <button style={s.ghostBtn}  onClick={() => setEditMember({ ...m })}>EDIT</button>
+                          <button style={s.dangerBtn} onClick={() => setConfirmDelete({ type: "member", id: m.id, name: m.name })}>DELETE</button>
+                        </div>
+                      )}
                     </div>
 
-                    {panel.open && (
+                    {isAdmin && panel.open && (
                       <div style={s.resetPanel}>
                         <div style={s.resetPanelTitle}>RESET PASSWORD — {m.name.toUpperCase()}</div>
                         <div style={s.resetSection}>
@@ -913,11 +868,10 @@ export default function PartsManager() {
         )}
       </main>
 
-      {/* ═══ MODAL: CREATE NEW USER ═══ */}
-      {createUserModal && (
+      {/* ═══ MODAL: CREATE NEW USER (admin only) ═══ */}
+      {isAdmin && createUserModal && (
         <CreateUserModal
           onClose={() => setCreateUserModal(false)}
-          onCreated={() => { setCreateUserModal(false); }}
           showNotification={showNotification}
         />
       )}
@@ -976,8 +930,8 @@ export default function PartsManager() {
         </Modal>
       )}
 
-      {/* ═══ MODAL: EDIT MEMBER ═══ */}
-      {editMember && (
+      {/* ═══ MODAL: EDIT MEMBER (admin only) ═══ */}
+      {isAdmin && editMember && (
         <Modal onClose={() => setEditMember(null)}>
           <div style={s.modalTitle}>EDIT MEMBER</div>
           <div style={s.modalLabel}>NAME</div>
